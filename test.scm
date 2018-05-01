@@ -6,9 +6,23 @@
 
 (define client (crc-connect "localhost" 6379))
 
+;; set key "a", "b"
+(pp (client crc-set "a" "123"))
+(pp (client crc-set "b" "456"))
+(pp (client crc-get "a"))
+(pp (client crc-get "b"))
+
+;; get all keys
 (pp (client crc-keys "*"))
 
-(pp (client crc-set "a" "456"))
+;; del key "a"
+(pp (client crc-del "a"))
 
-(pp (client crc-get "a"))
+;; get all keys
+(pp (client crc-keys "*"))
 
+;; flushall keys
+(pp (client crc-flushall))
+
+;; get all keys
+(pp (client crc-keys "*"))
