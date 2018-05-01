@@ -1,0 +1,7 @@
+(
+(files "crc.setup" "crc.release-info" "crc.meta" "crc.scm")
+(license "MIT")
+(category db)
+(needs socket)
+(author "Chuang Yu <cyu9960@gmail.com>")
+(synopsis "A redis client."))
