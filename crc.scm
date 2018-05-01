@@ -21,7 +21,8 @@
 
         ;; todo: add more commands
         ;; crc-<command>
-        (crc-make-commands crc-keys crc-get crc-set)
+        (crc-make-commands crc-keys crc-get crc-set
+                           crc-del crc-flushall)
 
         (define crc-format-bulks
           (lambda (command args)
@@ -31,7 +32,9 @@
                 (map
                   (lambda (arg)
                     (format "$~A\r\n~A\r\n"
-                            (string-length arg) arg)) args)))
+                            (if (string? arg)
+                                (string-length arg)
+                                (string-length (number->string arg))) arg)) args)))
             (format "*~A\r\n$~A\r\n~A\r\n~A~!"
                     (+ 1 (length args))
                     (string-length command)
@@ -42,7 +45,6 @@
           (lambda (op command args)
             (format op (crc-format-bulks command args))))
 
-        ;; todo: a nicer format
         (define crc-read
           (lambda (ip)
             (letrec ((l (lambda () '()))
@@ -51,7 +53,36 @@
                                  (if (not (char-ready? ip))
                                    (cons s l)
                                    (read-s (cons s l)))))))
-              (reverse (read-s (l))))))
+              (let ([res (reverse (read-s (l)))])
+                (letrec ((first
+                           (lambda ()
+                             (list-ref res 0)))
+                         (res-type
+                           (lambda ()
+                             (list-ref
+                               (string->list
+                                 (first)) 0)))
+                         (read-array
+                           (lambda (l folds)
+                             (if (null? l)
+                                 folds
+                                 (read-array (cddr l)
+                                             (cons (cadr l) folds)))))
+                         (read-bulk
+                           (lambda (l)
+                             (cadr l))))
+                  (case (res-type)
+                    ;; string
+                    ((#\+) (list (first)))
+                    ;; error
+                    ((#\-) (list (first)))
+                    ;; integer
+                    ((#\:) (list (first)))
+                    ;; array
+                    ((#\*) (read-array (cdr res) '()))
+                    ;; bulk
+                    ((#\$) (list (read-bulk res)))
+                    (else "error")))))))
 
         (define-syntax crc-dispatcher
           (er-macro-transformer
